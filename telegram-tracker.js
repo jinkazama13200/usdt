@@ -319,35 +319,28 @@ class TelegramUSDTTracker {
   // Hiển thị biến động số dư + giao dịch (gộp chung)
   async displayBalanceChangeWithTransactions(address, prevBal, currBal, change, txs = []) {
     const timeStr = new Date().toLocaleString();
-    const type = change > 0 ? '📈 TĂNG' : '📉 GIẢM';
+    const type = change > 0 ? '🟢 NHẬN' : '🔴 CHUYỂN';
     const sign = change > 0 ? '+' : '';
+    
+    // Lấy thông tin giao dịch đầu tiên
+    const firstTx = txs.length > 0 ? txs[0] : null;
+    const fromAddr = firstTx ? firstTx.from : '';
+    const toAddr = firstTx ? firstTx.to : '';
     
     console.log(chalk.yellow(`\n┌─ ${type} ${change.toFixed(6)} USDT ──────`));
     console.log(chalk.cyan(`│ 📍 ${address}`));
-    console.log(chalk.gray(`│ 💰 ${prevBal.toFixed(6)} → ${currBal.toFixed(6)} USDT`));
-    
-    if (txs.length > 0) {
-      console.log(chalk.cyan('\n│ 📊 Giao dịch:'));
-      txs.forEach((tx, i) => {
-        const amt = parseFloat(tx.amount) > 1000000 ? parseFloat(tx.amount) / 1000000 : parseFloat(tx.amount);
-        const dir = tx.from.toLowerCase() === address.toLowerCase() ? '📤 GỬI' : '📥 NHẬN';
-        const color = dir.includes('NHẬN') ? chalk.green : chalk.red;
-        console.log(color(`│   ${i+1}. ${dir}: ${amt.toFixed(6)} USDT`));
-        console.log(color(`│      ${tx.from.slice(0,8)}...${tx.from.slice(-6)} → ${tx.to.slice(0,8)}...${tx.to.slice(-6)}`));
-      });
+    if (firstTx) {
+      console.log(chalk.cyan(`│ 📤 Từ: ${fromAddr.slice(0,8)}...${fromAddr.slice(-6)}`));
+      console.log(chalk.cyan(`│ 📥 Đến: ${toAddr.slice(0,8)}...${toAddr.slice(-6)}`));
     }
+    console.log(chalk.gray(`│ 💰 ${prevBal.toFixed(6)} → ${currBal.toFixed(6)} USDT`));
     console.log(chalk.yellow('└────────────────────────────────────\n'));
 
-    let msg = `<b>${type.split(' ')[0]} BIẾN ĐỘNG SỐ DƯ USDT</b>\n\n📅 ${timeStr}\n📍 <code>${address}</code>\n💰 ${prevBal.toFixed(6)} → ${currBal.toFixed(6)} USDT\n📊 ${sign}${change.toFixed(6)} USDT (${change > 0 ? 'TĂNG' : 'GIẢM'})`;
-    
-    if (txs.length > 0) {
-      msg += '\n\n📊 <b>GIAO DỊCH LIÊN QUAN:</b>';
-      txs.forEach((tx, i) => {
-        const amt = parseFloat(tx.amount) > 1000000 ? parseFloat(tx.amount) / 1000000 : parseFloat(tx.amount);
-        const dir = tx.from.toLowerCase() === address.toLowerCase() ? '📤 GỬI' : '📥 NHẬN';
-        msg += `\n\n${i+1}. ${dir}: ${amt.toFixed(6)} USDT\n📤 Từ: <code>${tx.from}</code>\n📥 Đến: <code>${tx.to}</code>`;
-      });
+    let msg = `<b>${type}</b>\n\n📅 ${timeStr}\n📍 <code>${address}</code>`;
+    if (firstTx) {
+      msg += `\n📤 Từ: <code>${fromAddr}</code>\n📥 Đến: <code>${toAddr}</code>`;
     }
+    msg += `\n💰 ${prevBal.toFixed(6)} → ${currBal.toFixed(6)} USDT\n📊 ${sign}${change.toFixed(6)} USDT (${change > 0 ? 'NHẬN' : 'CHUYỂN'})`;
     
     await this.sendTelegramNotification(msg.trim());
   }
